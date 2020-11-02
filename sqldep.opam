@@ -11,4 +11,5 @@ synopsis: "SQL dependency analyzer"
 depends: [
   "dune"
   "sqlgg"
+  "ppx_inline_test"
 ]

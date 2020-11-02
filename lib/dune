@@ -1,1 +1,5 @@
-(library (public_name sqldep) (libraries sqlgg.lib))
+(library
+ (public_name sqldep)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test))
+ (libraries sqlgg.lib))
