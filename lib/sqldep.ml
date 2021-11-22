@@ -1,25 +1,62 @@
 open Sqlgg.Sql
 
 let tables s =
-  let rec aux {select = h, t; _} =
-    h :: t |>
-    List.map (function
-      | {from = None; _} -> []
-      | {from = Some p; _} ->
-        let rec extract = function
-          | `Select sf, _ -> aux sf
-          | `Table t, _ -> [t]
-          | `Nested (h, t), _ ->
-            List.map extract (h :: List.map fst t) |>
-            List.flatten
-        in
-        extract (`Nested p, None)
-    ) |>
+  let rec expr = function
+    | Value _ -> []
+    | Param _ -> []
+    | Choices (_, l) ->
+      List.map (fun (_, o) ->
+        match o with
+        | None -> []
+        | Some e -> expr e
+      ) l |>
+      List.flatten
+    | Fun (_, l) -> List.map expr l |> List.flatten
+    | Select (s, _) -> select_full s
+    | Column _ -> []
+    | Inserted _ -> []
+  and column = function
+    | All -> []
+    | AllOf _ -> []
+    | Expr (e, _) -> expr e
+  and nested (h, t) =
+    let source (s, _alias) =
+      match s with
+      | `Select s -> select_full s
+      | `Table t -> [t]
+      | `Nested n -> nested n
+    in
+    source h @ (
+      List.map (fun (s, c) ->
+        source s @
+        match c with
+        | `Cross -> []
+        | `Search e -> expr e
+        | `Default -> []
+        | `Natural -> []
+        | `Using _ -> []
+      ) t |>
+      List.flatten
+    )
+  and select {columns; from; where; group; having} =
+    List.flatten [
+      List.map column columns;
+      (match from with None -> [] | Some n -> [nested n]);
+      (match where with None -> [] | Some e -> [expr e]);
+      List.map expr group;
+      (match having with None -> [] | Some e -> [expr e]);
+    ] |>
+    List.flatten
+  and select_full {select = h, t; order; _} =
+    List.flatten [
+      h :: t |> List.map select;
+      List.map (fun (e, _) -> expr e) order;
+    ] |>
     List.flatten
   in
   match s with
-  | Select sf -> None, aux sf
-  | Create (name, `Select sf) -> Some name, aux sf
+  | Select sf -> None, select_full sf
+  | Create (name, `Select sf) -> Some name, select_full sf
   | _ -> raise (Invalid_argument "tables")
 
 
@@ -39,4 +76,5 @@ let%test_module _ = (module struct
   let%test "group_by_ex" = t "SELECT * FROM t GROUP BY EXISTS(SELECT * FROM u)" = ["t"; "u"]
   let%test "having_ex" = t "SELECT * FROM t GROUP BY x HAVING EXISTS(SELECT * FROM u)" = ["t"; "u"]
   let%test "order_by_ex" = t "SELECT * FROM t ORDER BY EXISTS(SELECT * FROM u)" = ["t"; "u"]
+  let%test "sel_ex" = t "SELECT EXISTS(SELECT * FROM u) FROM t" = ["t"; "u"]
 end)
