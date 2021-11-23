@@ -3,6 +3,7 @@ on: [push]
 jobs:
   access:
     runs-on: windows-latest
+    if: ${{ false }}
     steps:
       - uses: actions/checkout@v2
       - name: List before
