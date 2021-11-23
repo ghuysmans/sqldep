@@ -5,6 +5,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Download Microsoft Access Database Engine 2010 Redistributable
+        run: Invoke-WebRequest -OutFile AccessDatabaseEngine_X64.exe https://download.microsoft.com/download/2/4/3/24375141-E08D-4803-AB0E-10F2E3A07AAA/AccessDatabaseEngine_X64.exe
+      - name: Install Microsoft Access Database Engine 2010 Redistributable
+        run: ./AccessDatabaseEngine_X64.exe /quiet
       - name: Dump Access views
         run: cscript //nologo utils\dump_access_views.vbs utils\sample.accdb >views.sql
       - name: Diff the output
