@@ -1,0 +1,2 @@
+CREATE VIEW lft AS
+SELECT * FROM t WHERE LEFT(x, 2)=y
