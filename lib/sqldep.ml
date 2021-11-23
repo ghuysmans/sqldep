@@ -1,6 +1,6 @@
 open Sqlgg.Sql
 
-let tables s =
+let tables =
   let rec expr = function
     | Value _ -> []
     | Param _ -> []
@@ -54,19 +54,17 @@ let tables s =
     ] |>
     List.flatten
   in
-  match s with
-  | Select sf -> None, select_full sf
-  | Create (name, `Select sf) -> Some name, select_full sf
-  | _ -> raise (Invalid_argument "tables")
+  select_full
 
 
 let%test_module _ = (module struct
   let t sql =
-    Sqlgg.Parser.parse_stmt sql |>
-    tables |>
-    snd |>
-    List.map Sqlgg.Sql.show_table_name |>
-    List.sort compare
+    match Sqlgg.Parser.parse_stmt sql with
+    | Select sf ->
+      tables sf |>
+      List.map Sqlgg.Sql.show_table_name |>
+      List.sort compare
+    | _ -> failwith "expected a Select"
 
   let%test "from_prod" = t "SELECT * FROM t, u" = ["t"; "u"]
   let%test "join" = t "SELECT * FROM t INNER JOIN u ON t.x = u.x" = ["t"; "u"]
