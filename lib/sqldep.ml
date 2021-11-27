@@ -56,6 +56,9 @@ let tables =
   in
   select_full
 
+let fks _schema =
+  failwith "FIXME extend sqlgg"
+
 
 let%test_module _ = (module struct
   let t sql =

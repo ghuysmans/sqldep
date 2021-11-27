@@ -11,6 +11,13 @@ let show_view name sf =
   );
   Printf.printf "\n"
 
+let show_fks name sch =
+  show_name "TABLE" name;
+  Sqldep.fks sch |> List.iter (fun {table; _} ->
+    Printf.printf " %s" (Sql.show_table_name (`Table_name table))
+  );
+  Printf.printf "\n"
+
 
 type token = [`Comment of string | `Token of string | `Char of char |
               `Space of string | `Prop of string * string | `Semicolon ]
@@ -52,5 +59,6 @@ let () =
     match Parser.T.parse_string sql with
     | Some (Select sf) -> show_view `Anonymous sf (* FIXME recover pos_lnum *)
     | Some (Create (name, `Select sf)) -> show_view (`Table_name name) sf
+    | Some (Create (name, `Schema sch)) -> show_fks (`Table_name name) sch
     | _ -> ()
   )
