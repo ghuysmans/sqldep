@@ -6,8 +6,8 @@ type token = [`Comment of string | `Token of string | `Char of char |
 let () =
   let show name sf =
     (match name with
-     | `Table_name tn -> Printf.printf "%s:" (Sql.show_table_name tn)
-     | `Anonymous -> Printf.printf "?:");
+     | `Table_name tn -> Printf.printf "VIEW %s:" (Sql.show_table_name tn)
+     | `Anonymous -> Printf.printf "VIEW ?:");
     Sqldep.tables sf |> List.iter (fun x ->
       Printf.printf " %s" (Sql.show_table_name x)
     );
