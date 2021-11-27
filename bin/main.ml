@@ -1,18 +1,21 @@
 open Sqlgg
 
+let show_name typ = function
+  | `Table_name tn -> Printf.printf "%s %s:" typ (Sql.show_table_name tn)
+  | `Anonymous -> Printf.printf "%s ?:" typ
+
+let show_view name sf =
+  show_name "VIEW" name;
+  Sqldep.tables sf |> List.iter (fun x ->
+    Printf.printf " %s" (Sql.show_table_name x)
+  );
+  Printf.printf "\n"
+
+
 type token = [`Comment of string | `Token of string | `Char of char |
               `Space of string | `Prop of string * string | `Semicolon ]
 
 let () =
-  let show name sf =
-    (match name with
-     | `Table_name tn -> Printf.printf "VIEW %s:" (Sql.show_table_name tn)
-     | `Anonymous -> Printf.printf "VIEW ?:");
-    Sqldep.tables sf |> List.iter (fun x ->
-      Printf.printf " %s" (Sql.show_table_name x)
-    );
-    Printf.printf "\n"
-  in
   let lexbuf = Lexing.from_channel stdin in
   let tokens = Enum.from (fun () ->
     if lexbuf.Lexing.lex_eof_reached then raise Enum.No_more_elements else
@@ -47,7 +50,7 @@ let () =
   in
   Enum.from f |> Enum.iter (fun sql ->
     match Parser.T.parse_string sql with
-    | Some (Select sf) -> show `Anonymous sf (* FIXME recover pos_lnum *)
-    | Some (Create (name, `Select sf)) -> show (`Table_name name) sf
+    | Some (Select sf) -> show_view `Anonymous sf (* FIXME recover pos_lnum *)
+    | Some (Create (name, `Select sf)) -> show_view (`Table_name name) sf
     | _ -> ()
   )
