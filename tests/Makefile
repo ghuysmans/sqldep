@@ -3,4 +3,4 @@
 %.test: %.exp %.out
 	diff $*.exp $*.out
 
-all: $(patsubst %.sql,%.test,$(wildcard *.sql))
+test: $(patsubst %.sql,%.test,$(wildcard *.sql))
