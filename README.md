@@ -28,13 +28,13 @@ $ ./sqldep school <demo/school.sql >>print.dep
 Convert dependencies to a dot script,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ utils/dep_to_dot.sh <print.dep |dot -Tsvg >demo/print.svg
+$ utils/sqldep_to_dot <print.dep |dot -Tsvg >demo/print.svg
 ```
 ![Object Dependencies](demo/print.svg)
 
 Convert dependencies to a dot script describing inter-schema dependencies,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ (cd utils; ./dep_to_schema_dot.sh) <print.dep |dot -Tsvg >demo/print_s.svg
+$ (cd utils; ./sqldep_to_schema_dot) <print.dep |dot -Tsvg >demo/print_s.svg
 ```
 ![Schema Dependencies](demo/print_s.svg)
