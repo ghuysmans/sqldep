@@ -7,5 +7,14 @@ sed -nEe 's/CREATE (VIEW)\s+([A-Za-z0-9_.]+)\s+AS/%!\1 \2:/p' \
     -e 's/.*(FROM|JOIN|REFERENCES)\s+([A-Za-z0-9_.]+(,\s+[A-Za-z0-9_.]+)*)/%\2\n/p' |
 sed -ne 's/^%\(.*\)/\1/p' |
 tr '\n!' ' \n' |
+(
+	if [ -z "$1" ]; then
+		cat
+	else
+		sed -E "s/([A-Za-z0-9_.]+)/$1.\1/g" |
+		sed -E "s/$1\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)/\1.\2/g" |
+		sed -E 's/^[^.]+\.(TABLE|VIEW)/\1/'
+	fi
+) |
 tail -n +2
 echo
