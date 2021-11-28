@@ -13,7 +13,7 @@ formatted [the way I write them](print.sql).
 
 Extract dependencies, optionally prepending a schema name:
 ```
-$ ./sqldep print <print.sql |tee print.dep
+$ ./sqldep print <demo/print.sql |tee print.dep
 TABLE print.paper:
 TABLE print.service: print.paper
 VIEW print.per_user: print.service print.paper
@@ -22,19 +22,19 @@ VIEW print.per_class: print.service print.paper school.class
 
 Append dependencies extracted from another SQL script:
 ```
-$ ./sqldep school <school.sql >>print.dep
+$ ./sqldep school <demo/school.sql >>print.dep
 ```
 
 Convert dependencies to a dot script,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ utils/dep_to_dot.sh <print.dep |dot -Tsvg >print.svg
+$ utils/dep_to_dot.sh <print.dep |dot -Tsvg >demo/print.svg
 ```
-![Object Dependencies](./print.svg)
+![Object Dependencies](demo/print.svg)
 
 Convert dependencies to a dot script describing inter-schema dependencies,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ (cd utils; ./dep_to_schema_dot.sh) <print.dep |dot -Tsvg >print_s.svg
+$ (cd utils; ./dep_to_schema_dot.sh) <print.dep |dot -Tsvg >demo/print_s.svg
 ```
-![Schema Dependencies](./print_s.svg)
+![Schema Dependencies](demo/print_s.svg)
