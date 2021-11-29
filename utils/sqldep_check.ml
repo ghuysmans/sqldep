@@ -1,12 +1,25 @@
 open Sqldep
 open Printf
 
-let ctx = Hashtbl.create 50
-
-
-let () =
-  let lexbuf = Lexing.from_channel stdin in
-  Lexing.set_filename lexbuf "<stdin>";
+let check ctx inp =
+  let lexbuf =
+    let set_fn fn lexbuf =
+      Lexing.set_filename lexbuf fn;
+      lexbuf
+    in
+    match inp with
+    | `Stdin ->
+      Lexing.from_channel stdin |>
+      set_fn "<stdin>"
+    | `File fn ->
+      try
+        open_in fn |>
+        Lexing.from_channel |>
+        set_fn fn
+      with Sys_error e ->
+        eprintf "%s\n" e;
+        exit 2
+  in
   let err f =
     let pos = lexbuf.lex_start_p in
     kfprintf
@@ -42,3 +55,15 @@ let () =
       (* remember the view we may just have defined *)
       Hashtbl.replace ctx name typ)
     lexbuf
+
+
+let () =
+  let ctx = Hashtbl.create 50 in
+  match Sys.argv with
+  | [| _ |] -> check ctx `Stdin
+  | [| _; "-h" |] | [| _; "--help" |]->
+    eprintf "usage: %s sql.dep...\n" Sys.argv.(0);
+    exit 1
+  | _ ->
+    Array.to_list Sys.argv |> List.tl |>
+    List.iter (fun x -> check ctx (`File x))
