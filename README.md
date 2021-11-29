@@ -7,7 +7,7 @@ This tool extracts dependencies between database objects:
 At the moment, [sqlgg](https://github.com/ygrek/sqlgg/)
 can't parse all function calls and doesn't parse foreign keys at all,
 so I've thrown together a small but naïve shell script to analyze SQL scripts
-formatted [the way I write them](print.sql).
+formatted [the way I write them](demo/print.sql).
 
 ## Usage
 
