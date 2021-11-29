@@ -38,12 +38,16 @@ let check ctx inp =
         Hashtbl.replace ctx name typ
       else
         ())
-    (fun typ _ name ->
+    (fun typ name name' ->
       let typ' =
-        match Hashtbl.find_opt ctx name with
+        match Hashtbl.find_opt ctx name' with
         | Some _ as s -> s
         | None ->
-          err (fun ch () -> fprintf ch "undefined object '%s'" (show_name name));
+          err (fun ch () ->
+            fprintf ch "'%s' refers to the undefined object '%s'"
+              (show_name name)
+              (show_name name')
+          );
           None
       in
       match typ with
@@ -53,7 +57,9 @@ let check ctx inp =
         | None -> () (* don't report twice *)
         | Some `Table -> () (* good! *)
         | Some `View -> err (fun ch () ->
-          fprintf ch "a foreign key references '%s', a view" (show_name name)
+          fprintf ch "'%s' has a foreign key that refers to '%s', a view"
+            (show_name name)
+            (show_name name')
         ))
     (fun typ name ->
       (* remember the view we may just have defined *)
