@@ -52,3 +52,9 @@ $ (cd utils; ./sqldep_to_schema_dot) <demo/data/all.dep |dot -Tsvg >demo/data/sc
 $ cd demo/data
 $ make
 ```
+
+### Fully automatic
+
+Checks can be run before each commit using a pre-commit hook.
+Please install [`hooks/pre-commit`](hooks/pre-commit)
+into each of your repositories' `.git/hooks`.
