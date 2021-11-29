@@ -1,0 +1,2 @@
+(ocamllex (modules sqldep))
+(executables (names sqldep_to_dot))
