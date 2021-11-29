@@ -21,19 +21,20 @@ let name = ((id as db) '.')? (id as obj)
 rule traverse new_obj new_dep end_dep = parse
 | eof { () }
 | ("TABLE" | "VIEW" as typ) ' ' name ':' {
-  new_obj (if typ = "TABLE" then `Table else `View) (db, obj);
-  deps new_obj new_dep end_dep lexbuf
+  let typ = if typ = "TABLE" then `Table else `View in
+  new_obj typ (db, obj);
+  deps typ (db, obj) new_obj new_dep end_dep lexbuf
 }
 
-and deps new_obj new_dep end_dep = parse
+and deps typ name new_obj new_dep end_dep = parse
 | "\n" {
-  end_dep ();
+  end_dep typ name;
   Lexing.new_line lexbuf;
   traverse new_obj new_dep end_dep lexbuf
 }
 | ' ' name {
-  new_dep (db, obj);
-  deps new_obj new_dep end_dep lexbuf
+  new_dep typ name (db, obj);
+  deps typ name new_obj new_dep end_dep lexbuf
 }
 
 
@@ -48,8 +49,8 @@ let to_dot traverse ch =
         (quote (show_name name))
         (shape_of_typ typ)
         (quote (show_name name)))
-    (fun name -> printf "%s " (quote (show_name name)))
-    (fun () -> printf "}\n")
+    (fun _ _ name -> printf "%s " (quote (show_name name)))
+    (fun _ _ -> printf "}\n")
     ch;
   printf "}\n"
 }
