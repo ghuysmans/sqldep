@@ -1,6 +1,8 @@
 open Sqldep
 open Printf
 
+let errors = ref 0
+
 let check ctx inp =
   let lexbuf =
     let set_fn fn lexbuf =
@@ -23,7 +25,7 @@ let check ctx inp =
   let err f =
     let pos = lexbuf.lex_start_p in
     kfprintf
-      (fun _ch -> exit 1)
+      (fun _ch -> incr errors)
       stderr
       "%s:%d: error: %a\n" pos.pos_fname pos.pos_lnum
       f ()
@@ -39,16 +41,18 @@ let check ctx inp =
     (fun typ _ name ->
       let typ' =
         match Hashtbl.find_opt ctx name with
-        | Some x -> x
+        | Some _ as s -> s
         | None ->
-          err (fun ch () -> fprintf ch "undefined object '%s'" (show_name name))
+          err (fun ch () -> fprintf ch "undefined object '%s'" (show_name name));
+          None
       in
       match typ with
       | `View -> () (* it exists, that's all we need to know *)
       | `Table ->
         match typ' with
-        | `Table -> () (* good! *)
-        | `View -> err (fun ch () ->
+        | None -> () (* don't report twice *)
+        | Some `Table -> () (* good! *)
+        | Some `View -> err (fun ch () ->
           fprintf ch "a foreign key references '%s', a view" (show_name name)
         ))
     (fun typ name ->
@@ -59,7 +63,7 @@ let check ctx inp =
 
 let () =
   let ctx = Hashtbl.create 50 in
-  match Sys.argv with
+  begin match Sys.argv with
   | [| _ |] -> check ctx `Stdin
   | [| _; "-h" |] | [| _; "--help" |]->
     eprintf "usage: %s sql.dep...\n" Sys.argv.(0);
@@ -67,3 +71,5 @@ let () =
   | _ ->
     Array.to_list Sys.argv |> List.tl |>
     List.iter (fun x -> check ctx (`File x))
+  end;
+  if !errors > 0 then exit 3
