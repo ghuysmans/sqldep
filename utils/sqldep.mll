@@ -45,8 +45,9 @@ let to_dot traverse ch =
   printf "digraph {\n";
   traverse
     (fun typ name ->
-      printf "%s [shape=%s]\n%s -> {"
+      printf "%s [label=\"%s\", shape=%s]\n%s -> {"
         (quote (show_name name))
+        (show_name name)
         (shape_of_typ typ)
         (quote (show_name name)))
     (fun _ _ name -> printf "%s " (quote (show_name name)))
