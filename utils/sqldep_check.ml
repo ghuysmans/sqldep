@@ -22,12 +22,13 @@ let check ctx inp =
         eprintf "%s\n" e;
         exit 2
   in
-  let err f =
+  let err ?(note=false) f =
     let pos = lexbuf.lex_start_p in
     kfprintf
       (fun _ch -> incr errors)
       stderr
-      "%s:%d: error: %a\n" pos.pos_fname pos.pos_lnum
+      "%s:%d: %s: %a\n" pos.pos_fname pos.pos_lnum
+      (if note then "note" else "error")
       f ()
   in
   traverse
