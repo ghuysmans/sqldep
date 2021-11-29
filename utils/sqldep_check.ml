@@ -3,6 +3,8 @@ open Printf
 
 let errors = ref 0
 
+let missing = Hashtbl.create 10
+
 let check ctx inp =
   let lexbuf =
     let set_fn fn lexbuf =
@@ -35,10 +37,24 @@ let check ctx inp =
     (fun typ name ->
       if Hashtbl.mem ctx name then
         err (fun ch () -> fprintf ch "redefinition of '%s'" (show_name name))
-      else if typ = `Table then (* allow self-referencing FKs *)
-        Hashtbl.replace ctx name typ
-      else
-        ())
+      else begin
+        if typ = `Table then (* allow self-referencing FKs *)
+          Hashtbl.replace ctx name typ;
+        if Hashtbl.mem missing name then
+          let l =
+            (* FIXME and *)
+            Hashtbl.find_all missing name |>
+            List.map (fun x -> "'" ^ show_name x ^ "'") |>
+            String.concat ", "
+          in
+          err ~note:true (fun ch () ->
+            fprintf ch
+            (* FIXME box *)
+            "'%s' is defined here. Please move %s at least after this point."
+            (show_name name)
+            l
+          )
+      end)
     (fun typ name name' ->
       let typ' =
         match Hashtbl.find_opt ctx name' with
@@ -49,6 +65,7 @@ let check ctx inp =
               (show_name name)
               (show_name name')
           );
+          Hashtbl.add missing name' name;
           None
       in
       match typ with
