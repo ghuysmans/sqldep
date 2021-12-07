@@ -20,6 +20,10 @@ let name = ((id as db) '.')? (id as obj)
 
 rule traverse new_obj new_dep end_dep = parse
 | eof { () }
+| '\n' {
+  Lexing.new_line lexbuf;
+  traverse new_obj new_dep end_dep lexbuf
+}
 | ("TABLE" | "VIEW" as typ) ' ' name ':' {
   let typ = if typ = "TABLE" then `Table else `View in
   new_obj typ (db, obj);
