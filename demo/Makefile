@@ -4,4 +4,4 @@ all.dep: print.dep school.dep
 check: all.dep
 	sqldep_check $^
 
-include ../../Makefile.inc
+include ../Makefile.inc

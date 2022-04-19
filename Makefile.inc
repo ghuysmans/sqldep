@@ -1,4 +1,4 @@
-%.dep: ../%/schema.sql
+%.dep: %/schema.sql
 	sqldep $* <$< >$@
 %.svg: %.dot
 	dot -Tsvg $< >$@
