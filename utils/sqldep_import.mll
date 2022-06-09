@@ -74,7 +74,7 @@ let () =
       in
       let lexbuf = Lexing.from_channel ch in
       Lexing.set_filename lexbuf fn;
-      traverse f f f lexbuf
+      traverse f f ignore lexbuf
     with Sys_error e ->
       Printf.eprintf "%s\n" e;
       exit 2
