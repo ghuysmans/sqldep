@@ -32,6 +32,7 @@ rule traverse insert update delete = parse
 | eof { () }
 
 and eat insert update delete = parse
+| whatever { traverse insert update delete lexbuf }
 | whatever nl {
   Lexing.new_line lexbuf;
   traverse insert update delete lexbuf
