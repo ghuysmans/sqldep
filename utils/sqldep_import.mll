@@ -41,23 +41,40 @@ and eat insert update delete = parse
 
 {
 let () =
-  let f (db, obj) =
-    match Sys.argv with
-    | [| _ |] ->
-      Printf.printf "%s\n" Sqldep.(show_name (db, obj))
-    | [| _; prefix |] ->
-      let db =
-        match db with
-        | None -> Some prefix
-        | Some _ -> db
-      in
-      Sqldep.(quote (show_name (db, obj))) |>
-      Printf.printf "%s [color=grey, fontcolor=grey]\n"
-    | _ ->
-      Printf.eprintf "usage: %s [prefix]\n" Sys.argv.(0);
+  let files, f =
+    match Array.to_list Sys.argv |> List.tl with
+    | [] ->
+      [`Stdin],
+      fun o -> Printf.printf "%s\n" Sqldep.(show_name o)
+    | ["-h"] | ["--help"] ->
+      Printf.eprintf "usage: %s [prefix [script.vbs...]]\n" Sys.argv.(0);
       exit 1
+    | prefix :: l ->
+      begin match l with
+        | [] -> [`Stdin]
+        | _ -> l |> List.map (function "-" -> `Stdin | f -> `File f)
+      end,
+      fun (db, obj) ->
+        let db =
+          match db with
+          | None -> Some prefix
+          | Some _ -> db
+        in
+        Sqldep.(quote (show_name (db, obj))) |>
+        Printf.printf "%s [color=grey, fontcolor=grey]\n"
   in
-  let lexbuf = Lexing.from_channel stdin in
-  Lexing.set_filename lexbuf "<stdin>";
-  traverse f f f lexbuf
+  files |> List.iter (fun inp ->
+    try
+      let ch, fn =
+        match inp with
+        | `Stdin -> stdin, "<stdin>"
+        | `File fn -> open_in fn, fn
+      in
+      let lexbuf = Lexing.from_channel ch in
+      Lexing.set_filename lexbuf fn;
+      traverse f f f lexbuf
+    with Sys_error e ->
+      Printf.eprintf "%s\n" e;
+      exit 2
+  )
 }
