@@ -1,25 +1,26 @@
 let id = ['A'-'Z' 'a'-'z' '0'-'9' '_']+
 let name = ((id as db) '.')? (id as obj)
 let indent = ['\t'' ']
+let command = indent* (".CommandText = \"" | id ".Execute \"")
 let whatever = [^'\r''\n']*
 let nl = '\r'?'\n'
 
 (* FIXME case-insensitive match *)
 rule traverse insert update delete = parse
-| indent+ ".CommandText = \"INSERT " ("OR REPLACE " | "IGNORE ")? "INTO " name {
+| command "INSERT " ("OR REPLACE " | "IGNORE ")? "INTO " name {
   insert (db, obj);
   eat insert update delete lexbuf
 }
-| indent+ ".CommandText = \"UPDATE " name {
+| command "UPDATE " name {
   update (db, obj);
   eat insert update delete lexbuf
 }
-| indent+ ".CommandText = \"DELETE FROM " name {
+| command "DELETE FROM " name {
   delete (db, obj);
   eat insert update delete lexbuf
 }
 (* TODO DELETE t FROM t INNER JOIN u... parse? improve sqlgg? *)
-| indent+ ".CommandText = \"" {
+| command {
   let pos = lexbuf.lex_start_p in
   Printf.eprintf "%s:%d: warning: unhandled query\n" pos.pos_fname pos.pos_lnum;
   eat insert update delete lexbuf
