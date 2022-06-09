@@ -19,6 +19,11 @@ rule traverse insert update delete = parse
   eat insert update delete lexbuf
 }
 (* TODO DELETE t FROM t INNER JOIN u... parse? improve sqlgg? *)
+| indent+ ".CommandText = \"" {
+  let pos = lexbuf.lex_start_p in
+  Printf.eprintf "%s:%d: warning: unhandled query\n" pos.pos_fname pos.pos_lnum;
+  eat insert update delete lexbuf
+}
 | nl {
   Lexing.new_line lexbuf;
   traverse insert update delete lexbuf
@@ -52,5 +57,7 @@ let () =
       Printf.eprintf "usage: %s [prefix]\n" Sys.argv.(0);
       exit 1
   in
-  Lexing.from_channel stdin |> traverse f f f
+  let lexbuf = Lexing.from_channel stdin in
+  Lexing.set_filename lexbuf "<stdin>";
+  traverse f f f lexbuf
 }
