@@ -44,23 +44,44 @@ and eat insert update delete = parse
 {
 let () =
   let files, f =
+    let generic fmt prefix l =
+      if fmt = `Backup then (
+        Printf.printf "USE sqlbackup;\n";
+        Printf.printf "DELETE FROM blacklist WHERE reason='sqldep';\n"
+      );
+      l |> List.map (function "-" -> `Stdin | f -> `File f),
+      fun (db, obj) ->
+        let db =
+          match db with
+          | None -> prefix
+          | Some _ -> db
+        in
+        let open Sqldep in
+        match fmt with
+        | `Backup ->
+          Printf.printf
+            "INSERT INTO blacklist VALUES ('%s', '%s', 'sqldep', 1);\n"
+            (match db with None -> "?" | Some x -> x)
+            obj
+        | `Raw ->
+          Printf.printf "%s\n" (show_name (db, obj))
+        | `Graph ->
+          Printf.printf "%s [color=grey, fontcolor=grey]\n"
+            (quote (show_name (db, obj)))
+    in
     match Array.to_list Sys.argv |> List.tl with
     | [] ->
       [`Stdin],
       fun o -> Printf.printf "%s\n" Sqldep.(show_name o)
     | ["-h"] | ["--help"] ->
-      Printf.eprintf "usage: %s [prefix script.vbs...]\n" Sys.argv.(0);
+      Printf.eprintf "usage: %s [[-b|-g] prefix script.vbs...]\n" Sys.argv.(0);
       exit 1
+    | "-g" :: prefix :: l ->
+      generic `Graph (Some prefix) l
+    | "-b" :: prefix :: l ->
+      generic `Backup (Some prefix) l
     | prefix :: l ->
-      l |> List.map (function "-" -> `Stdin | f -> `File f),
-      fun (db, obj) ->
-        let db =
-          match db with
-          | None -> Some prefix
-          | Some _ -> db
-        in
-        Sqldep.(quote (show_name (db, obj))) |>
-        Printf.printf "%s [color=grey, fontcolor=grey]\n"
+      generic `Raw (Some prefix) l
   in
   files |> List.iter (fun inp ->
     try
