@@ -4,7 +4,7 @@
 	dot -Tsvg $< >$@
 .SECONDEXPANSION:
 %.imp: $$(wildcard %/import*.wsf %/sync*.wsf)
-	sqldep_import $(patsubst %.imp,%,$@) /dev/null $^ >$@
+	sqldep_import $(patsubst %.imp,%,$@) $^ >$@
 
 #please define all.dep, all.imp
 objects.dot: all.dep all.imp

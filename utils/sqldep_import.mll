@@ -49,13 +49,10 @@ let () =
       [`Stdin],
       fun o -> Printf.printf "%s\n" Sqldep.(show_name o)
     | ["-h"] | ["--help"] ->
-      Printf.eprintf "usage: %s [prefix [script.vbs...]]\n" Sys.argv.(0);
+      Printf.eprintf "usage: %s [prefix script.vbs...]\n" Sys.argv.(0);
       exit 1
     | prefix :: l ->
-      begin match l with
-        | [] -> [`Stdin]
-        | _ -> l |> List.map (function "-" -> `Stdin | f -> `File f)
-      end,
+      l |> List.map (function "-" -> `Stdin | f -> `File f),
       fun (db, obj) ->
         let db =
           match db with
