@@ -53,21 +53,24 @@ let () =
     match Array.to_list Sys.argv |> List.tl with
     | [] -> ["-"], fun _ ->
       ignore,
-      fun o -> Printf.printf "%s\n" (show_name o)
+      fun op o -> Printf.printf "%s %s\n" op (show_name o)
     | ["-h"] | ["--help"] ->
       Printf.eprintf "usage: %s [[-b|-g] prefix script.vbs...]\n" Sys.argv.(0);
       exit 1
-    | "-g" :: prefix :: l -> l, fun _ ->
-      ignore,
-      fun o ->
-        Printf.printf "%s [color=grey, fontcolor=grey]\n"
-          (quote (show_name (extend prefix o)))
+    | "-g" :: prefix :: l -> l, fun fn ->
+      (fun () ->
+        let sh = "parallelogram" in (* TODO option *)
+        Printf.printf "\"%s\" [label=\"%s\", shape=%s]\n" fn fn sh),
+      fun op o ->
+        let node = quote (show_name (extend prefix o)) in
+        Printf.printf "%s [color=grey, fontcolor=grey]\n" node;
+        Printf.printf "\"%s\" -> %s [style=dashed, label=\"%s\"]\n" fn node op
     | "-b" :: prefix :: l ->
       Printf.printf "USE sqlbackup;\n";
       Printf.printf "DELETE FROM blacklist WHERE reason='sqldep';\n";
       l, fun fn ->
         ignore,
-        fun (db, obj) ->
+        fun _ (db, obj) ->
           Printf.printf
             "INSERT INTO blacklist VALUES ('%s', '%s', '%s', 1);\n"
             (Option.value ~default:prefix db)
@@ -75,8 +78,8 @@ let () =
             fn
     | prefix :: l -> l, fun _fn ->
       ignore,
-      fun o ->
-        Printf.printf "%s\n" (show_name (extend prefix o))
+      fun op o ->
+        Printf.printf "%s %s\n" op (show_name (extend prefix o))
   in
   files |> List.iter (fun fn ->
     try
@@ -90,7 +93,7 @@ let () =
       header ();
       let lexbuf = Lexing.from_channel ch in
       Lexing.set_filename lexbuf fn;
-      traverse body body ignore lexbuf
+      traverse (body "INSERT") (body "UPDATE") ignore lexbuf
     with Sys_error e ->
       Printf.eprintf "%s\n" e;
       exit 2
