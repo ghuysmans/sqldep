@@ -42,57 +42,55 @@ and eat insert update delete = parse
 
 
 {
+let extend prefix (db, obj) =
+  match db with
+  | None -> Some prefix, obj
+  | _ -> db, obj
+
 let () =
   let files, f =
-    let generic fmt prefix l =
-      if fmt = `Backup then (
-        Printf.printf "USE sqlbackup;\n";
-        Printf.printf "DELETE FROM blacklist WHERE reason='sqldep';\n"
-      );
-      l |> List.map (function "-" -> `Stdin | f -> `File f),
-      fun (db, obj) ->
-        let db =
-          match db with
-          | None -> prefix
-          | Some _ -> db
-        in
-        let open Sqldep in
-        match fmt with
-        | `Backup ->
-          Printf.printf
-            "INSERT INTO blacklist VALUES ('%s', '%s', 'sqldep', 1);\n"
-            (match db with None -> "?" | Some x -> x)
-            obj
-        | `Raw ->
-          Printf.printf "%s\n" (show_name (db, obj))
-        | `Graph ->
-          Printf.printf "%s [color=grey, fontcolor=grey]\n"
-            (quote (show_name (db, obj)))
-    in
+    let open Sqldep in
     match Array.to_list Sys.argv |> List.tl with
-    | [] ->
-      [`Stdin],
-      fun o -> Printf.printf "%s\n" Sqldep.(show_name o)
+    | [] -> ["-"], fun _ ->
+      ignore,
+      fun o -> Printf.printf "%s\n" (show_name o)
     | ["-h"] | ["--help"] ->
       Printf.eprintf "usage: %s [[-b|-g] prefix script.vbs...]\n" Sys.argv.(0);
       exit 1
-    | "-g" :: prefix :: l ->
-      generic `Graph (Some prefix) l
+    | "-g" :: prefix :: l -> l, fun _ ->
+      ignore,
+      fun o ->
+        Printf.printf "%s [color=grey, fontcolor=grey]\n"
+          (quote (show_name (extend prefix o)))
     | "-b" :: prefix :: l ->
-      generic `Backup (Some prefix) l
-    | prefix :: l ->
-      generic `Raw (Some prefix) l
+      Printf.printf "USE sqlbackup;\n";
+      Printf.printf "DELETE FROM blacklist WHERE reason='sqldep';\n";
+      l, fun fn ->
+        ignore,
+        fun (db, obj) ->
+          Printf.printf
+            "INSERT INTO blacklist VALUES ('%s', '%s', '%s', 1);\n"
+            (Option.value ~default:prefix db)
+            obj
+            fn
+    | prefix :: l -> l, fun _fn ->
+      ignore,
+      fun o ->
+        Printf.printf "%s\n" (show_name (extend prefix o))
   in
-  files |> List.iter (fun inp ->
+  files |> List.iter (fun fn ->
     try
       let ch, fn =
-        match inp with
-        | `Stdin -> stdin, "<stdin>"
-        | `File fn -> open_in fn, fn
+        if fn = "-" then
+          stdin, "<stdin>"
+        else
+          open_in fn, fn
       in
+      let header, body = f fn in
+      header ();
       let lexbuf = Lexing.from_channel ch in
       Lexing.set_filename lexbuf fn;
-      traverse f f ignore lexbuf
+      traverse body body ignore lexbuf
     with Sys_error e ->
       Printf.eprintf "%s\n" e;
       exit 2
