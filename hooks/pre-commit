@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Redirect output to stderr.
+exec 1>&2
+
+DATA=$(git config hooks.projectdata)
+if [ -z "$DATA" ]; then
+	echo error: please configure the data root in hooks.projectdata >&2
+	exit 1
+fi
+
+PROJECT=$(basename "$(git rev-parse --show-toplevel)")
+if ! grep "all.dep:.* $PROJECT\.dep" $DATA/Makefile >/dev/null; then
+	echo warning: this project is NOT analyzed by sqldep >&2
+fi
+
+(cd $DATA && make check)

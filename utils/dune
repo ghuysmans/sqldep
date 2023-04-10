@@ -1,0 +1,2 @@
+(ocamllex (modules sqldep sqldep_import))
+(executables (names sqldep_check sqldep_to_dot sqldep_to_schema_dot sqldep_import))
