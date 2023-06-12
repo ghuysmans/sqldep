@@ -15,7 +15,7 @@ formatted [the way I write them](demo/print.sql).
 
 Extract dependencies, optionally prepending a schema name:
 ```
-$ ./sqldep print <demo/print/schema.sql |tee demo/data/print.dep
+$ ./sqldep print <demo/print/schema.sql |tee demo/print.dep
 TABLE print.paper:
 TABLE print.service: print.paper
 VIEW print.per_user: print.service print.paper
@@ -24,27 +24,27 @@ VIEW print.per_class: print.service print.paper school.class
 
 Extract dependencies from another SQL script:
 ```
-$ ./sqldep school <demo/school/schema.sql >demo/data/school.dep
+$ ./sqldep school <demo/school/schema.sql >demo/school.dep
 ```
 
 Concatenate dependency information:
 ```
-$ cat demo/data/{print,school}.dep >demo/data/all.dep
+$ cat demo/{print,school}.dep >demo/all.dep
 ```
 
 Convert dependencies to a dot script,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ utils/sqldep_to_dot <demo/data/all.dep |dot -Tsvg >demo/data/objects.svg
+$ utils/sqldep_to_dot <demo/all.dep |dot -Tsvg >demo/objects.svg
 ```
-![Object Dependencies](demo/data/objects.svg)
+![Object Dependencies](demo/objects.svg)
 
 Convert dependencies to a dot script describing inter-schema dependencies,
 then render it using [GraphViz](https://graphviz.org/):
 ```
-$ (cd utils; ./sqldep_to_schema_dot) <demo/data/all.dep |dot -Tsvg >demo/data/schemata.svg
+$ (cd utils; ./sqldep_to_schema_dot) <demo/all.dep |dot -Tsvg >demo/schemata.svg
 ```
-![Schema Dependencies](demo/data/schemata.svg)
+![Schema Dependencies](demo/schemata.svg)
 
 ### Semi-automatic
 
